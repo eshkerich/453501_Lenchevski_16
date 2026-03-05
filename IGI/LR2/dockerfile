@@ -1,0 +1,24 @@
+FROM python:3.9-alpine
+
+# Установка метаданных
+LABEL maintainer="453501_lenchevski_16"
+LABEL version="1.0"
+LABEL description="Docker образ для geometric_lib (circle и square)"
+
+# Установка рабочей директории
+WORKDIR /app
+
+# Копирование файлов библиотеки geometric_lib
+COPY geometric_lib/ ./geometric_lib/
+
+# Копирование скрипта
+COPY main.py .
+
+# Создание директории для конфигурационных файлов (будет монтироваться как volume)
+RUN mkdir -p /config
+
+# Установка прав на выполнение скрипта
+RUN chmod +x main.py  
+
+# Команда по умолчанию
+CMD ["python", "main.py"]

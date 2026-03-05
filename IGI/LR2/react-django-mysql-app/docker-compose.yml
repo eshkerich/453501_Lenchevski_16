@@ -1,0 +1,263 @@
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: mysql_db_16
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      # Том для сохранения данных базы данных
+      - mysql_data_16:/var/lib/mysql
+      # Том для инициализационных скриптов
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+      # Том для бэкапов
+      - mysql_backups_16:/backups
+    networks:
+      - backend_network_16
+      - database_network_16
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --max_connections=1000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Django Backend Service
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_backend_16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DEBUG: ${DEBUG}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: myproject.settings
+    volumes:
+      # Том для кода приложения (для разработки)
+      - ./backend:/app
+      # Том для статических файлов
+      - static_volume_16:/app/static
+      # Том для медиа файлов
+      - media_volume_16:/app/media
+      # Том для логов
+      - logs_volume_16:/app/logs
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - backend_network_16
+      - frontend_backend_network_16
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # React Frontend Service
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend_16
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    volumes:
+      # Том для конфигурации nginx
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Том для статических файлов (опционально)
+      - frontend_build_16:/usr/share/nginx/html
+    networks:
+      - frontend_network_16
+      - frontend_backend_network_16
+    environment:
+      REACT_APP_API_URL: http://localhost:${BACKEND_PORT:-8000}/api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# phpMyAdmin (опционально, для управления БД)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "8000:80"
+    networks:
+      - database_network_16
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+# Определение сетей
+networks:
+  # Сеть для бэкенда и базы данных
+  backend_network_16:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
+    labels:
+      - "project=react-django-mysql"
+      - "variant=16"
+
+  # Сеть для фронтенда
+  frontend_network_16:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+          gateway: 172.21.0.1
+    labels:
+      - "project=react-django-mysql"
+      - "variant=16"
+
+  # Сеть для связи фронтенда и бэкенда
+  frontend_backend_network_16:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+          gateway: 172.22.0.1
+    labels:
+      - "project=react-django-mysql"
+      - "variant=16"
+
+  # Сеть для базы данных (изолированная)
+  database_network_16:
+    driver: bridge
+    internal: true  # Внутренняя сеть, без доступа извне
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24
+          gateway: 172.23.0.1
+    labels:
+      - "project=react-django-mysql"
+      - "variant=16"
+
+# Определение томов
+volumes:
+  # Том для данных MySQL
+  mysql_data_16:
+    name: mysql_data_volume_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/mysql/data
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=database"
+      - "service=mysql"
+
+  # Том для бэкапов MySQL
+  mysql_backups_16:
+    name: mysql_backups_volume_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/mysql/backups
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=backup"
+      - "service=mysql"
+
+  # Том для статических файлов Django
+  static_volume_16:
+    name: static_volume_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/backend/static
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=static"
+      - "service=backend"
+
+  # Том для медиа файлов Django
+  media_volume_16:
+    name: media_volume_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/backend/media
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=media"
+      - "service=backend"
+
+  # Том для логов Django
+  logs_volume_16:
+    name: logs_volume_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/backend/logs
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=logs"
+      - "service=backend"
+
+  # Том для собранного фронтенда
+  frontend_build_16:
+    name: frontend_build_16
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/docker-volumes/frontend/build
+      o: bind
+    labels:
+      - "project=react-django-mysql"
+      - "type=build"
+      - "service=frontend"

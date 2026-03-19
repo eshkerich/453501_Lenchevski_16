@@ -15,12 +15,6 @@ import time
 def timer_decorator(func):
     """
     Decorator to measure and display the execution time of a function.
-
-    Args:
-        func: The function to be decorated
-
-    Returns:
-        wrapper: The wrapped function
     """
 
     @functools.wraps(func)
@@ -37,12 +31,6 @@ def timer_decorator(func):
 def log_decorator(func):
     """
     Decorator to log function calls and their arguments.
-
-    Args:
-        func: The function to be decorated
-
-    Returns:
-        wrapper: The wrapped function
     """
 
     @functools.wraps(func)
@@ -59,12 +47,6 @@ def log_decorator(func):
 def input_validation_decorator(func):
     """
     Decorator to handle input validation exceptions.
-
-    Args:
-        func: The function to be decorated
-
-    Returns:
-        wrapper: The wrapped function
     """
 
     @functools.wraps(func)

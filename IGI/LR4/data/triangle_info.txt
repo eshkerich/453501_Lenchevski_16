@@ -1,0 +1,15 @@
+Task 4 Results - Variant 16
+==================================================
+
+Equilateral triangle circumscribed about a circle: R=52.0, side=180.13, perimeter=540.40, area=42151.19, color=purple, label='Pupus'
+
+All parameters:
+  type: Equilateral triangle circumscribed about a circle
+  radius: 52.0
+  side: 180.13328398716322
+  perimeter: 540.3998519614897
+  area: 42151.1884529962
+  color: purple
+  label: Pupus
+
+Instance count: 1

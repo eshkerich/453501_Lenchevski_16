@@ -1,0 +1,39 @@
+==================================================
+TASK 2 RESULTS - VARIANT 16
+==================================================
+
+INDIVIDUAL TASK RESULTS:
+------------------------------
+1. Text with words of length 4 (last 3 chars replaced by '$'):
+Hello world! W$ t$ is it? The current t$ is 14:30 and meeting e$ at 23:45.
+    Please check the schedule. The longest w$ ending w$ e is apple, but orange is a$ a g$ example.
+    S$ punctuation examples: hello, world. T$ is a t$. Another w$, followed by comma.
+    Short words: a, b, c. The w$ 'extraordinary' has maximum length.
+    Check t$ formats: 09:00, 25:00 (invalid), 14:60 (invalid), 00:00.
+    H$ are s$ smileys: :-) ;-) :)) ;-[[[ :) ;(( :---))) ;---]]]].
+    How are you today? I h$ everything is f$! Watch out for the deadline!
+
+2. Valid times in HH:MM format: ['14:30', '23:45', '09:00', '00:00']
+
+3. Number of words with maximum length: 1
+
+4. Words followed by comma or period: ['schedule', 'apple', 'example', 'hello', 'world', 'test', 'word', 'comma', 'a', 'b', 'c', 'length']
+
+5. Longest word ending with 'e': schedule
+
+==================================================
+COMMON TASKS RESULTS
+==================================================
+
+1. Total number of sentences: 15
+
+2. Sentences by type:
+   - Declarative: 10
+   - Interrogative: 2
+   - Imperative: 3
+
+3. Average sentence length (characters, words only): 23.93
+
+4. Average word length (characters): 4.43
+
+5. Number of smileys in the text: 8

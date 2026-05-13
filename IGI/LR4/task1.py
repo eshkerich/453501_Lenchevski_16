@@ -155,3 +155,6 @@ def task1():
         cont = input("\nSearch again? (y/n): ").strip().lower()
         if cont != 'y':
             break
+
+if __name__ == "__main__":
+    task1()
